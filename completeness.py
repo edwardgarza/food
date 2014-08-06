@@ -4,28 +4,37 @@ import csv
 import numpy as np
 
 '''Table used for daily values: 
-http://www.fda.gov/Food/GuidanceRegulation/GuidanceDocumentsRegulatoryInformation/LabelingNutrition/ucm064928.htm'''
-
+http://www.fda.gov/Food/GuidanceRegulation/GuidanceDocumentsRegulatoryInformation/LabelingNutrition/ucm064928.htm
+Vitamins stores vitamins a-k
+Minerals stores ca, cu, fe, mg, manganese, niacin, P, K, riboflavin, Se, Na, Thiamin, Zn in that order'''
 def completeness(vitamins, minerals, macros):
 	'''Makes an arbitrary completeness score from vitamins, minerals, and macros
 	in that order'''	
+	vitaminnew = np.zeros(len(vitamins))
+        mineralnew = np.zeros(len(minerals))
+        print len(vitamins)
 	#Normalize for 2000 calories per day
-        z = macros[0]
-	normalization = 2000 / float(z)
+	normalization = 2000 / float(macros[0])
+        Dailyvaluevit = [5000, 2, 6, 60, 400, 30, 80]
+        Dailyvaluemin = [1000, 2, 18, 400, 2, 20, 1000, 3500, 1.7, 70, 2400, 1.5, 15]
+        print len(Dailyvaluemin), len(minerals)
         #Vit A
-        vitamins[0] *= normalization / float(5000)
-        vitamins[1] *= normalization / float(2)
-        vitamins[2] *= normalization / float(6)
-        #Vit C
-        vitamins[3] *= normalization / float(60)
-        vitamins[4] *=normalization / float(400)
-        vitamins[5] *= normalization / float(30)
-        #Vit K
-        vitamins[6] *= normalization /float(80)
+        for i in range(len(vitamins)):
+                if vitamins[i] == '':
+                        vitaminnew[i] = 0
+                else:
+                        vitaminnew[i] = normalization / float(Dailyvaluevit[i]) * float(vitamins[i])
+        for i in range(len(minerals)):
+                if minerals[i] == '':
+                        mineralnew[i] = 0
+                else:
+                        mineralnew[i] = normalization / float(Dailyvaluemin[i]) * float(minerals[i])
         completeness = 0
-        for i in range(7):
-                completeness += vitamins[i]
-        return completeness
+        for i in range(len(vitamins)):
+                completeness += vitaminnew[i]
+        for i in range(len(minerals)):
+                completeness += mineralnew[i]
+        return completeness/float(len(vitamins) + len(minerals))
 	
 
 
@@ -66,14 +75,17 @@ for row in reader:
         globals()[name].append(row[i])
         #Forces to append to each only once per loop to the categories
         if i == 0:
-		vitamins.append((row[32] , row[25], row[31], row[20], row[42], row[40], row[43], row[30], row[27])) 	
+                #Each list is in alphabetical order
+		vitamins.append((row[32] , row[25], row[31], row[20], row[42], row[40], row[43])) 	
         	macros.append((row[3], row[4], row[6], \
                                row[7], row[8], row[44], row[45], row[46]))
         	minerals.append((row[10], row[17],row[11], row[12], row[18], row[23], row[13], row[14], row[22], row[19], row[15], row[21], row[16]))
             	p += 1
         i += 1
-
+print minerals[200]
 print completeness(vitamins[1], minerals[1], macros[1])
+print completeness(vitamins[200], minerals[200], macros[200])
+#print vitamins[0]
     #NDB_No.append(row[0])
 print minerals[0]
 
