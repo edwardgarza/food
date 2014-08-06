@@ -5,19 +5,24 @@ import numpy as np
 
 '''Table used for daily values: 
 http://www.fda.gov/Food/GuidanceRegulation/GuidanceDocumentsRegulatoryInformation/LabelingNutrition/ucm064928.htm
-Vitamins stores vitamins a-k
+Vitamins stores vitamins a-k and then  folate, niacin, pantoacid, riboflavin, thiamin
 Minerals stores ca, cu, fe, mg, manganese, niacin, P, K, riboflavin, Se, Na, Thiamin, Zn in that order'''
 def completeness(vitamins, minerals, macros):
-	'''Makes an arbitrary completeness score from vitamins, minerals, and macros
-	in that order'''	
+	'''Makes an arbitrary completeness score from summing %DV of vits + mins.
+        Argument is vitamins, minerals, and macros, in that order'''	
+        #Threshold after which %DV is unimportant
+        threshold = 1
 	vitaminnew = np.zeros(len(vitamins))
         mineralnew = np.zeros(len(minerals))
-        print len(vitamins)
 	#Normalize for 2000 calories per day
-	normalization = 2000 / float(macros[0])
-        Dailyvaluevit = [5000, 2, 6, 60, 400, 30, 80]
-        Dailyvaluemin = [1000, 2, 18, 400, 2, 20, 1000, 3500, 1.7, 70, 2400, 1.5, 15]
-        print len(Dailyvaluemin), len(minerals)
+        if float(macros[0]) == 0.0:
+                z = 1
+        else:
+                z = float(macros[0])
+	normalization = 2000 / float(z)
+        #Vector of daily values
+        Dailyvaluevit = [5000, 2, 6, 60, 400, 30, 80, 400, 20, 10, 1.7, 1.5]
+        Dailyvaluemin = [1000, 2, 18, 400, 2, 1000, 3500, 70, 2400, 15]
         #Vit A
         for i in range(len(vitamins)):
                 if vitamins[i] == '':
@@ -29,12 +34,17 @@ def completeness(vitamins, minerals, macros):
                         mineralnew[i] = 0
                 else:
                         mineralnew[i] = normalization / float(Dailyvaluemin[i]) * float(minerals[i])
-        completeness = 0
+        complete = 0
         for i in range(len(vitamins)):
-                completeness += vitaminnew[i]
+                #Used to limit contribution of excess %DV
+                if vitaminnew[i] > threshold:
+                        vitaminnew[i] = threshold
+                complete += vitaminnew[i]
         for i in range(len(minerals)):
-                completeness += mineralnew[i]
-        return completeness/float(len(vitamins) + len(minerals))
+                if mineralnew[i] > threshold:
+                        mineralnew[i] = threshold
+                complete += mineralnew[i]
+        return complete/float(len(vitamins) + len(minerals))
 	
 
 
@@ -60,6 +70,7 @@ variable_list = ['NDB_No', 'Shrt_Desc', 'Water_g', 'Energ_Kcal', 'Protein_g',\
 macros = []
 vitamins = []
 minerals = []
+description = []
 #Initializes all of the variables as empty lists
 for name in variable_list:
     globals()[name] = []
@@ -68,25 +79,40 @@ for name in variable_list:
     
 p = 0
 top = 0
+goodlist = []
 for row in reader:
-    i = 0
+        i = 0
 #Adds information to each variable
-    for name in variable_list:
-        globals()[name].append(row[i])
-        #Forces to append to each only once per loop to the categories
-        if i == 0:
-                #Each list is in alphabetical order
-		vitamins.append((row[32] , row[25], row[31], row[20], row[42], row[40], row[43])) 	
-        	macros.append((row[3], row[4], row[6], \
-                               row[7], row[8], row[44], row[45], row[46]))
-        	minerals.append((row[10], row[17],row[11], row[12], row[18], row[23], row[13], row[14], row[22], row[19], row[15], row[21], row[16]))
-            	p += 1
-        i += 1
-print minerals[200]
-print completeness(vitamins[1], minerals[1], macros[1])
-print completeness(vitamins[200], minerals[200], macros[200])
-#print vitamins[0]
-    #NDB_No.append(row[0])
-print minerals[0]
+        for name in variable_list:
+                globals()[name].append(row[i])
+                #Forces to append to each only once per loop to the categories
+                if i == 0:
+                        #Each list is in alphabetical order
+                        vitamins.append((row[32] , row[25], row[31], row[20], row[42], row[40], \
+                                         row[43], row[26], row[23], row[24], row[22], row[21])) 	
+                        macros.append((row[3], row[4], row[6], \
+                                       row[7], row[8], row[44], row[45], row[46]))
+                        minerals.append((row[10], row[17],row[11], row[12], row[18], row[13],\
+                                         row[14], row[19], row[15], row[16]))
+                        description.append((row[0], row[1]))
+                i += 1
+        #p = 0 is excluded because it is just descriptions
+        if p != 0:
+                #Finds the highest "completeness" score
+                if top < completeness(vitamins[p], minerals[p], macros[p]):
+                        top = completeness(vitamins[p], minerals[p], macros[p])
+                        number = p
+                #makes a list of 'good' foods
+                if completeness(vitamins[p], minerals[p], macros[p]) > .90:
+                        goodlist.append(p)
+        p += 1
 
+print top, number, description[number][1]
+#Prints description of 'good' foods
+for id in goodlist:
+        print id, completeness(vitamins[id], minerals[id], macros[id]), description[id][1]
+print vitamins[number], minerals[number], macros[number]
+#print completeness(vitamins[number], minerals[number], macros[number])
+#completeness(vitamins[1], minerals[1], macros[1])
+#print completeness(vitamins[200], minerals[200], macros[200])
 
