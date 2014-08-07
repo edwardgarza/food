@@ -123,6 +123,4 @@ print '-----------------------------------------------'
 #Prints description of 'good' foods
 for id in goodlist:
         print id, completeness(vitamins[id], minerals[id], macros[id]), description[id][1]
-#print completeness(vitamins[number], minerals[number], macros[number])
-#completeness(vitamins[1], minerals[1], macros[1])
-#print completeness(vitamins[200], minerals[200], macros[200])
+
