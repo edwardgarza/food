@@ -20,13 +20,32 @@ def read_daily_values():
 
 	return daily_values
 
+def remove(to_remove):
+	global ingredients, portions_and_refuse, values
+
+	for i in reversed(to_remove):
+		ingredients.pop(i)
+		portions_and_refuse.pop(i)
+		values = np.delete(values, (i), axis=0)
+
+def remove_unnatural_ingredients():
+	global ingredients, portions_and_refuse, values
+
+	to_remove = []
+	for i in range(len(ingredients)):
+		if "BEV" in ingredients[i] or "FORM" in ingredients[i]:
+			to_remove.append(i)
+
+	remove(to_remove)
+
+
 #def optimize(header, daily_values):
 
 
 reader = csv.reader(open('ABBREV.csv', 'rb'), delimiter=',')
 reader.next()
 
-# 'NDB_No', 'Shrt_Desc', 
+# 'NDB_No', 'Shrt_Desc', 	
 
 header = ['Water_g', 'Energ_Kcal', 'Protein_g',\
 'Lipid_Tot_g', 'Ash_g', 'Carbohydrt_g', 'Fiber_TD_g', 'Sugar_Tot_g',\
@@ -49,7 +68,7 @@ values = []
 
 for row in reader:
 	ingredients.append(row[1])
-	portions_and_refuse = row[-5:]
+	portions_and_refuse.append(row[-5:])
 
 	vals = []
 	for val in row[2:-4]:
@@ -61,7 +80,11 @@ for row in reader:
 	values.append(vals)
 
 values = np.array(values, dtype=float)
-print ingredients, values
+print values.shape
+
+remove_unnatural_ingredients()
+
+print values.shape
 
 
 daily_values = read_daily_values()
